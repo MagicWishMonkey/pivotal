@@ -1,0 +1,16 @@
+# Ignore the pycharm/intellij files
+glob:.idea/*
+.idea
+
+# Ignore Mac system files
+.DS_Store
+/.DS_Store$
+
+
+# Ignore any .pyc files (compiled python modules)
+*.pyc
+*.pyo
+*.iml
+*.blob
+
+debug.py
