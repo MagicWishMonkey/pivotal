@@ -1,18 +1,14 @@
-from fusion import tools
-from .containers import *
+from pivotal import util
+from pivotal.containers import *
 
 
-class Tracker(object):
+class PivotalTracker(object):
     __default_project_id__ = None
 
-    def __init__(self, token, database):
-        PivotalObject.__token__ = token
-
-        if isinstance(database, basestring) is True:
-            database = tools.file(database)
-
-
+    def __init__(self):
+        database = util.file("~/.pivotal.json")
         self.database = database
+        self.__token__ = None
         self.__object__ = {}
         self.__status__ = {}
         self.__stories__ = []
@@ -21,15 +17,34 @@ class Tracker(object):
 
         #database.delete()
         if database.exists is False:
-            database.write_text(tools.json({"projects": [], "accounts": [], "stories": [], "status": {}}))
+            database.write_text(util.json({"token": "", "projects": [], "accounts": [], "stories": [], "status": {}}))
             self.sync()
         else:
             self.load()
+            if len(self.__projects__) == 0:
+                self.sync()
 
+    @property
+    def token(self):
+        return self.__token__
+
+    def ask_for_token(self):
+        while True:
+            token = util.ask("Enter your api token: ")
+            if isinstance(token, basestring) is True and len(token.strip()) > 5:
+                self.__token__ = token
+                PivotalObject.__token__ = token
+                self.save()
+                return self
 
     def load(self):
         data = self.database.read_text()
-        object = tools.unjson(data)
+        object = util.unjson(data)
+        token = object["token"]
+        if token:
+            self.__token__ = token
+            PivotalObject.__token__ = self.__token__
+
         self.__object__ = object
 
         self.__status__ = object["status"]
@@ -48,6 +63,7 @@ class Tracker(object):
 
     def save(self):
         obj = {}
+        obj["token"] = self.__token__
         obj["status"] = self.__status__
 
         projects = self.projects
@@ -63,7 +79,7 @@ class Tracker(object):
         accounts = [o.deflate() for o in accounts]
         obj["accounts"] = accounts
 
-        data = tools.json(obj)
+        data = util.json(obj)
         self.database.write_text(data)
 
     def bind(self, project=None, story=None, account=None):
@@ -101,7 +117,6 @@ class Tracker(object):
     def accounts(self, lst):
         self.__accounts__ = lst
         self.__object__["accounts"] = lst
-
 
     @property
     def current_project(self):
@@ -187,6 +202,7 @@ class Tracker(object):
         self.save()
 
     def update_projects(self):
+        print "updating projects."
         projects = Project.export()
         current_projects = self.projects
 
@@ -207,7 +223,12 @@ class Tracker(object):
             self.save()
 
     def update_stories(self):
+        print "updating stories."
         projects = self.projects
+        if len(projects) == 0:
+            self.update_projects()
+            projects = self.projects
+
         stories = []
         for project in projects:
             lst = project.stories
@@ -218,7 +239,12 @@ class Tracker(object):
         self.save()
 
     def update_accounts(self):
+        print "updating accounts."
         projects = self.projects
+        if len(projects) == 0:
+            self.update_projects()
+            projects = self.projects
+
         accounts = []
         for project in projects:
             lst = project.accounts
@@ -231,6 +257,10 @@ class Tracker(object):
         self.save()
 
     def sync(self):
+        if self.__token__ is None:
+            self.ask_for_token()
+
+        print "synchronizing."
         self.update_projects()
         self.update_stories()
         self.update_accounts()
@@ -341,6 +371,26 @@ class Tracker(object):
         self.save()
         return self
 
+    def __repr__(self):
+        account = self.current_account
+        project = self.current_project
+        story = self.current_story
+
+        buffer = []
+        if account is not None:
+            buffer.append("Account#%s" % account.label)
+
+        if project is not None:
+            buffer.append("Project#%s" % project.label)
+
+        if story is not None:
+            buffer.append("Story#%s" % story.label)
+
+        label = "" if len(buffer) == 0 else ",".join(buffer)
+        return "PivotalTracker: %s" % label
+
+    def __str__(self):
+        return self.__repr__()
 
 
 

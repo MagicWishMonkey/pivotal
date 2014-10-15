@@ -1,4 +1,4 @@
-from fusion import tools
+from pivotal import util
 
 
 
@@ -14,10 +14,6 @@ class PivotalObject(object):
     def token(self):
         return PivotalObject.__token__
 
-    # @property
-    # def tracker(self):
-    #     return self.__tracker__
-
     @property
     def label(self):
         return self.__dict__["name"]
@@ -25,9 +21,9 @@ class PivotalObject(object):
     @staticmethod
     def get(uri, fn=None):
         token = PivotalObject.__token__
-        object = tools.http_get(uri, ("X-TrackerToken", token))
+        object = util.web_get(uri, ("X-TrackerToken", token))
         if isinstance(object, basestring) is True:
-            object = tools.unjson(object)
+            object = util.unjson(object)
 
         if isinstance(object, list) is True:
             objects = [ServerObject.create(**(o)) for o in object]
@@ -49,10 +45,9 @@ class PivotalObject(object):
             for key in kwd:
                 val = kwd[key]
                 data[key] = val
-            #data = tools.json(data)
-        object = tools.http_post(uri, headers=("X-TrackerToken", token), data=data)
+        object = util.web_post(uri, data, ("X-TrackerToken", token))
         if isinstance(object, basestring) is True:
-            object = tools.unjson(object)
+            object = util.unjson(object)
 
         if isinstance(object, list) is True:
             objects = [ServerObject.create(**(o)) for o in object]
@@ -60,51 +55,11 @@ class PivotalObject(object):
         object = ServerObject.create(**(object))
         return object
 
-
-    # def _get_(self, uri):
-    #     return self.__tracker__._get_(uri)
-    #
-    # def _post_(self, uri):
-    #     return self.__tracker__._post_(uri)
-
-
     def _get_(self, uri, fn=None):
         return PivotalObject.get(uri, fn=fn)
-        # request = tools.create_http_request(uri, ("X-TrackerToken", self.token))
-        # object = request.GET()
-        # #response = util.web_get(uri, ("X-TrackerToken", self.token))
-        # #object = util.unjson(response)
-        # if isinstance(object, list) is True:
-        #     objects = [ServerObject.create(**(o)) for o in object]
-        #     return objects
-        # object = ServerObject.create(**(object))
-        # return object
 
     def _post_(self, uri, **kwd):
         return PivotalObject.post(uri, **kwd)
-        # request = tools.create_http_request(uri, ("X-TrackerToken", self.token))
-        # response = request.POST()
-        #
-        # #response = tools.http_post(uri, headers={"X-TrackerToken": self.token})
-        # object = tools.unjson(response)
-        # if isinstance(object, list) is True:
-        #     objects = [ServerObject.create(**(o)) for o in object]
-        #     return objects
-        # object = ServerObject.create(**(object))
-        # return object
-
-    # def stringify(self):
-    #     tracker = self.__tracker__
-    #     self.__tracker__ = None
-    #     data = util.pickle(self)
-    #     data = util.base64(data)
-    #     self.__tracker__ = tracker
-    #     return data
-
-    # def bind(self, tracker):
-    #     self.__tracker__ = tracker
-    #     return self
-
 
     def deflate(self):
         tbl = self.__dict__
@@ -128,7 +83,7 @@ class PivotalObject(object):
 
     @classmethod
     def spawn(cls, *objects):
-        objects = tools.unroll(objects)
+        objects = util.unroll(objects)
         return [cls(**(o)) for o in objects]
 
 
@@ -173,7 +128,7 @@ class ServerObject(dict):
 
     def __str__(self):
         obj = self.objectify()
-        data = tools.json_encode_pretty(obj)
+        data = util.json(obj, indent=2)
         return data
 
     def __repr__(self):

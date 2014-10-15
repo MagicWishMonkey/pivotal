@@ -1,3 +1,2 @@
-import os, sys
-sys.path.append(os.environ["SOLOMON"])
-from .tracker import *
+from pivotal import util
+from pivotal.tracker import PivotalTracker
