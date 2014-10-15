@@ -91,6 +91,23 @@ class PivotalTracker(object):
             self.current_account_id = account
         return self
 
+    def clear_project(self):
+        self.__status__["project_id"] = None
+        self.__status__["story_id"] = None
+        self.save()
+        return self
+
+    def clear_story(self):
+        self.__status__["story_id"] = None
+        self.save()
+        return self
+
+    def clear_account(self):
+        self.__status__["account_id"] = None
+        self.save()
+        return self
+
+
     @property
     def projects(self):
         return self.__projects__
