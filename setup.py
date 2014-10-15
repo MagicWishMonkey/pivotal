@@ -12,7 +12,7 @@ from setuptools import find_packages
 setup(
     name = "pivotal",
     version = "1.0",
-    author = "Ron!",
+    author = "Ron Rodenberg",
     author_email = "rodenberg@gmail.com",
     description = "The pivotal package.",
     license = "MIT",
